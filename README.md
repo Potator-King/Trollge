@@ -1,114 +1,139 @@
--- Simple GUI com botões: Teleport Chests, Teleport Coins, Teleport Pellet e Auto Collect
-
 -- Configurações iniciais
 game.Workspace.FallenPartsDestroyHeight = -50000
-
 _G.TeleportChests = false
 _G.TeleportCoins  = false
 _G.TeleportPellet = false
 _G.Collect        = false
 
 -- Cria ScreenGui
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name   = "AutoFarmGui"
-screenGui.Parent = game.CoreGui
+local gui = Instance.new("ScreenGui")
+gui.Name   = "AutoFarmGui"
+gui.Parent = game.CoreGui
 
--- Função de criação de botão
-local function criarBotao(nome, posY)
+-- Cria frame principal (draggable)
+local frame = Instance.new("Frame")
+frame.Name                 = "MainFrame"
+frame.Size                 = UDim2.new(0, 240, 0, 260)
+frame.Position             = UDim2.new(0.1, 0, 0.1, 0)
+frame.BackgroundColor3     = Color3.fromRGB(30,30,30)
+frame.BorderSizePixel      = 0
+frame.Active               = true
+frame.Draggable            = true
+frame.Parent               = gui
+
+-- Botão fechar (X)
+local closeBtn = Instance.new("TextButton")
+closeBtn.Name             = "CloseBtn"
+closeBtn.Size             = UDim2.new(0, 24, 0, 24)
+closeBtn.Position         = UDim2.new(1, -26, 0, 2)
+closeBtn.Text             = "X"
+closeBtn.TextSize         = 18
+closeBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+closeBtn.TextColor3       = Color3.fromRGB(255,255,255)
+closeBtn.Parent           = frame
+closeBtn.MouseButton1Up:Connect(function()
+    gui:Destroy()
+end)
+
+-- Função auxiliar para criar botões
+local function createButton(label, y)
     local btn = Instance.new("TextButton")
-    btn.Name               = nome:gsub(" ", "")
-    btn.Text               = nome
-    btn.Size               = UDim2.new(0, 200, 0, 40)
-    btn.Position           = UDim2.new(0, 20, 0, posY)
-    btn.BackgroundColor3   = Color3.fromRGB(50,50,50)
-    btn.TextColor3         = Color3.fromRGB(255,255,255)
-    btn.TextScaled         = true
-    btn.Parent             = screenGui
+    btn.Size             = UDim2.new(0, 200, 0, 40)
+    btn.Position         = UDim2.new(0, 20, 0, y)
+    btn.Text             = label
+    btn.TextSize         = 18
+    btn.TextColor3       = Color3.fromRGB(255,255,255)
+    btn.BackgroundColor3 = Color3.fromRGB(50,50,50)
+    btn.Parent           = frame
     return btn
 end
 
--- Cria botões na GUI
-local btnTeleportChests = criarBotao("Teleport to Chests (Off)", 20)
-local btnTeleportCoins  = criarBotao("Teleport to Coins (Off)", 70)
-local btnTeleportPellet = criarBotao("Teleport to Pellet (Off)", 120)
-local btnAutoCollect    = criarBotao("Auto Collect (Off)", 170)
+-- Cria os quatro botões
+local btnTeleportChests = createButton("Teleport to Chests (Off)", 30)
+local btnTeleportCoins  = createButton("Teleport to Coins (Off)", 80)
+local btnTeleportPellet = createButton("Teleport to Pellet (Off)", 130)
+local btnAutoCollect    = createButton("Auto Collect (Off)", 180)
 
--- Função Teleport Chests
+-- TELEPORT CHESTS
 btnTeleportChests.MouseButton1Up:Connect(function()
     _G.TeleportChests = not _G.TeleportChests
+    btnTeleportChests.BackgroundColor3 = _G.TeleportChests and Color3.fromRGB(0,200,0) or Color3.fromRGB(200,0,0)
+    btnTeleportChests.Text = _G.TeleportChests and "Teleport to Chests (On)" or "Teleport to Chests (Off)"
     if _G.TeleportChests then
-        btnTeleportChests.BackgroundColor3 = Color3.fromRGB(0,200,0)
-        btnTeleportChests.Text = "Teleport to Chests (On)"
-        spawn(function()
+        task.spawn(function()
             while _G.TeleportChests do
-                for _, v in pairs(workspace.chests:GetChildren()) do
+                for _, v in ipairs(workspace.chests:GetChildren()) do
+                    if not _G.TeleportChests then break end
                     if v:IsA("BasePart") then
-                        local cf = v.CFrame
-                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = cf
+                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = v.CFrame
                         wait(0.2)
                     end
                 end
+                wait(0.5)
             end
         end)
-    else
-        btnTeleportChests.BackgroundColor3 = Color3.fromRGB(200,0,0)
-        btnTeleportChests.Text = "Teleport to Chests (Off)"
     end
 end)
 
--- Função Teleport Coins
+-- TELEPORT COINS
 btnTeleportCoins.MouseButton1Up:Connect(function()
     _G.TeleportCoins = not _G.TeleportCoins
+    btnTeleportCoins.BackgroundColor3 = _G.TeleportCoins and Color3.fromRGB(0,200,0) or Color3.fromRGB(200,0,0)
+    btnTeleportCoins.Text = _G.TeleportCoins and "Teleport to Coins (On)" or "Teleport to Coins (Off)"
     if _G.TeleportCoins then
-        btnTeleportCoins.BackgroundColor3 = Color3.fromRGB(0,200,0)
-        btnTeleportCoins.Text = "Teleport to Coins (On)"
-        spawn(function()
+        task.spawn(function()
             while _G.TeleportCoins do
-                for _, v in pairs(workspace:GetDescendants()) do
+                local coins = {}
+                for _, v in ipairs(workspace:GetDescendants()) do
                     if v:IsA("BasePart") and (v.Name == "Coin1" or v.Name == "Coin2" or v.Name == "Coin4") then
-                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = v.CFrame + Vector3.new(0,3,0)
-                        wait(0.2)
+                        table.insert(coins, v)
                     end
                 end
+                for _, v in ipairs(coins) do
+                    if not _G.TeleportCoins then break end
+                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = v.CFrame + Vector3.new(0,3,0)
+                    wait(0.2)
+                end
+                wait(0.5)
             end
         end)
-    else
-        btnTeleportCoins.BackgroundColor3 = Color3.fromRGB(200,0,0)
-        btnTeleportCoins.Text = "Teleport to Coins (Off)"
     end
 end)
 
--- Função Teleport Pellet
+-- TELEPORT PELLET
 btnTeleportPellet.MouseButton1Up:Connect(function()
     _G.TeleportPellet = not _G.TeleportPellet
+    btnTeleportPellet.BackgroundColor3 = _G.TeleportPellet and Color3.fromRGB(0,200,0) or Color3.fromRGB(200,0,0)
+    btnTeleportPellet.Text = _G.TeleportPellet and "Teleport to Pellet (On)" or "Teleport to Pellet (Off)"
     if _G.TeleportPellet then
-        btnTeleportPellet.BackgroundColor3 = Color3.fromRGB(0,200,0)
-        btnTeleportPellet.Text = "Teleport to Pellet (On)"
-        spawn(function()
+        task.spawn(function()
             while _G.TeleportPellet do
-                for _, v in pairs(workspace:GetDescendants()) do
+                local pellets = {}
+                for _, v in ipairs(workspace:GetDescendants()) do
                     if v:IsA("BasePart") and v.Name == "WhiteSpiritPellet" then
-                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = v.CFrame + Vector3.new(0,3,0)
-                        wait(0.2)
+                        table.insert(pellets, v)
                     end
                 end
+                for _, v in ipairs(pellets) do
+                    if not _G.TeleportPellet then break end
+                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = v.CFrame + Vector3.new(0,3,0)
+                    wait(0.2)
+                end
+                wait(0.5)
             end
         end)
-    else
-        btnTeleportPellet.BackgroundColor3 = Color3.fromRGB(200,0,0)
-        btnTeleportPellet.Text = "Teleport to Pellet (Off)"
     end
 end)
 
--- Função Auto Collect
+-- AUTO COLLECT
 btnAutoCollect.MouseButton1Up:Connect(function()
     _G.Collect = not _G.Collect
+    btnAutoCollect.BackgroundColor3 = _G.Collect and Color3.fromRGB(0,200,0) or Color3.fromRGB(200,0,0)
+    btnAutoCollect.Text = _G.Collect and "Auto Collect (On)" or "Auto Collect (Off)"
     if _G.Collect then
-        btnAutoCollect.BackgroundColor3 = Color3.fromRGB(0,200,0)
-        btnAutoCollect.Text = "Auto Collect (On)"
-        spawn(function()
+        task.spawn(function()
             while _G.Collect do
-                for _, v in pairs(workspace:GetDescendants()) do
+                for _, v in ipairs(workspace:GetDescendants()) do
                     if v:IsA("BasePart") then
                         local prom = v:FindFirstChildOfClass("ProximityPrompt")
                         if prom then fireproximityprompt(prom) end
@@ -117,8 +142,5 @@ btnAutoCollect.MouseButton1Up:Connect(function()
                 wait(0.1)
             end
         end)
-    else
-        btnAutoCollect.BackgroundColor3 = Color3.fromRGB(200,0,0)
-        btnAutoCollect.Text = "Auto Collect (Off)"
     end
 end)
