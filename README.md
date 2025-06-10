@@ -122,25 +122,54 @@ btnPellet.MouseButton1Click:Connect(function()
     end)
 end)
 
--- Auto Collect
+-- Auto Collect otimizado
 btnCollect.MouseButton1Click:Connect(function()
     toggleLoop("Collect", btnCollect, function()
-        while _G.Collect do
-            -- normal chests
-            for _, v in ipairs(workspace.chests:GetChildren()) do
-                if v:IsA("BasePart") then fireproximityprompt(v:FindFirstChildOfClass("ProximityPrompt")) end
+        -- Atualiza listas uma vez fora do loop interno
+        local chestParts = workspace.chests:GetChildren()
+        local specialParts = {}
+        for _, v in ipairs(workspace:GetChildren()) do
+            if v.Name=="DarkChest_p" or v.Name=="Weeping Chest-p" then
+                table.insert(specialParts, v)
             end
-            -- special chests
-            for _, v in ipairs(workspace:GetChildren()) do
-                if v.Name=="DarkChest_p" or v.Name=="Weeping Chest-p" then fireproximityprompt(v:FindFirstChildOfClass("ProximityPrompt")) end
-            end
-            -- coins & pellet
-            for _, v in ipairs(workspace:GetDescendants()) do
-                if v:IsA("BasePart") and (v.Name=="Coin1"or v.Name=="Coin2"or v.Name=="Coin4"or v.Name=="WhiteSpiritPellet") then
-                    fireproximityprompt(v:FindFirstChildOfClass("ProximityPrompt"))
+        end
+        local coinParts = {}
+        local pelletParts = {}
+        for _, v in ipairs(workspace:GetDescendants()) do
+            if v:IsA("BasePart") then
+                if v.Name=="Coin1" or v.Name=="Coin2" or v.Name=="Coin4" then
+                    table.insert(coinParts, v)
+                elseif v.Name=="WhiteSpiritPellet" then
+                    table.insert(pelletParts, v)
                 end
             end
-            wait(0.1)
+        end
+        
+        while _G.Collect do
+            -- coletar chests normais
+            for _, v in ipairs(chestParts) do
+                if v:IsA("BasePart") then
+                    local p = v:FindFirstChildOfClass("ProximityPrompt")
+                    if p then fireproximityprompt(p) end
+                end
+            end
+            -- coletar chests especiais
+            for _, v in ipairs(specialParts) do
+                local p = v:FindFirstChildOfClass("ProximityPrompt")
+                if p then fireproximityprompt(p) end
+            end
+            -- coletar coins
+            for _, v in ipairs(coinParts) do
+                local p = v:FindFirstChildOfClass("ProximityPrompt")
+                if p then fireproximityprompt(p) end
+            end
+            -- coletar pellet
+            for _, v in ipairs(pelletParts) do
+                local p = v:FindFirstChildOfClass("ProximityPrompt")
+                if p then fireproximityprompt(p) end
+            end
+            task.wait(0.2)
         end
     end)
 end)
+
