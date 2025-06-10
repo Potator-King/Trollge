@@ -6,20 +6,25 @@ _G.TeleportPellet = false
 _G.Collect        = false
 
 -- Cria ScreenGui
-local gui = Instance.new("ScreenGui")
+gui = Instance.new("ScreenGui")
 gui.Name   = "AutoFarmGui"
 gui.Parent = game.CoreGui
 
--- Cria frame principal (draggable)
+-- Cria frame principal (draggable, transparente)
 local frame = Instance.new("Frame")
 frame.Name                 = "MainFrame"
 frame.Size                 = UDim2.new(0, 240, 0, 260)
 frame.Position             = UDim2.new(0.1, 0, 0.1, 0)
 frame.BackgroundColor3     = Color3.fromRGB(30,30,30)
+frame.BackgroundTransparency = 0.3
 frame.BorderSizePixel      = 0
 frame.Active               = true
 frame.Draggable            = true
 frame.Parent               = gui
+
+-- Guardar tamanho e posição originais para minimizar/restaurar
+local origSize, origPos = frame.Size, frame.Position
+local minimized = false
 
 -- Botão fechar (X)
 local closeBtn = Instance.new("TextButton")
@@ -35,6 +40,39 @@ closeBtn.MouseButton1Up:Connect(function()
     gui:Destroy()
 end)
 
+-- Botão minimizar (- / +)
+local minBtn = Instance.new("TextButton")
+minBtn.Name             = "MinimizeBtn"
+minBtn.Size             = UDim2.new(0, 24, 0, 24)
+minBtn.Position         = UDim2.new(0, 2, 0, 2)
+minBtn.Text             = "-"
+minBtn.TextSize         = 18
+minBtn.BackgroundColor3 = Color3.fromRGB(100,100,100)
+minBtn.TextColor3       = Color3.fromRGB(255,255,255)
+minBtn.Parent           = frame
+
+minBtn.MouseButton1Up:Connect(function()
+    if not minimized then
+        -- minimizar
+        origSize, origPos = frame.Size, frame.Position
+        for _, child in ipairs(frame:GetChildren()) do
+            if child ~= closeBtn and child ~= minBtn then child.Visible = false end
+        end
+        frame.Size = UDim2.new(0, 240, 0, 40)
+        minBtn.Text = "+"
+        minimized = true
+    else
+        -- restaurar
+        frame.Size = origSize
+        frame.Position = origPos
+        for _, child in ipairs(frame:GetChildren()) do
+            child.Visible = true
+        end
+        minBtn.Text = "-"
+        minimized = false
+    end
+end)
+
 -- Função auxiliar para criar botões
 local function createButton(label, y)
     local btn = Instance.new("TextButton")
@@ -48,13 +86,13 @@ local function createButton(label, y)
     return btn
 end
 
--- Cria os quatro botões
+-- Cria os botões com posições iniciais
 local btnTeleportChests = createButton("Teleport to Chests (Off)", 30)
 local btnTeleportCoins  = createButton("Teleport to Coins (Off)", 80)
 local btnTeleportPellet = createButton("Teleport to Pellet (Off)", 130)
 local btnAutoCollect    = createButton("Auto Collect (Off)", 180)
 
--- TELEPORT CHESTS
+-- Lógica Teleport Chests
 btnTeleportChests.MouseButton1Up:Connect(function()
     _G.TeleportChests = not _G.TeleportChests
     btnTeleportChests.BackgroundColor3 = _G.TeleportChests and Color3.fromRGB(0,200,0) or Color3.fromRGB(200,0,0)
@@ -75,7 +113,7 @@ btnTeleportChests.MouseButton1Up:Connect(function()
     end
 end)
 
--- TELEPORT COINS
+-- Lógica Teleport Coins
 btnTeleportCoins.MouseButton1Up:Connect(function()
     _G.TeleportCoins = not _G.TeleportCoins
     btnTeleportCoins.BackgroundColor3 = _G.TeleportCoins and Color3.fromRGB(0,200,0) or Color3.fromRGB(200,0,0)
@@ -100,7 +138,7 @@ btnTeleportCoins.MouseButton1Up:Connect(function()
     end
 end)
 
--- TELEPORT PELLET
+-- Lógica Teleport Pellet
 btnTeleportPellet.MouseButton1Up:Connect(function()
     _G.TeleportPellet = not _G.TeleportPellet
     btnTeleportPellet.BackgroundColor3 = _G.TeleportPellet and Color3.fromRGB(0,200,0) or Color3.fromRGB(200,0,0)
@@ -125,7 +163,7 @@ btnTeleportPellet.MouseButton1Up:Connect(function()
     end
 end)
 
--- AUTO COLLECT
+-- Lógica Auto Collect
 btnAutoCollect.MouseButton1Up:Connect(function()
     _G.Collect = not _G.Collect
     btnAutoCollect.BackgroundColor3 = _G.Collect and Color3.fromRGB(0,200,0) or Color3.fromRGB(200,0,0)
